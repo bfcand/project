@@ -3,6 +3,8 @@
 
 #include <string>
 #include <vector>
+#include <portaudio.h>
+#include <sndfile.h>
 
 using namespace std;
 
@@ -13,15 +15,14 @@ class Track {
     public:
     void setName(string name);
     string getName();
-    virtual bool setAudio() = 0;
-    static int audioCallback(const void* inputBuffer, 
-                         void* outputBuffer, 
-                         unsigned long framesPerBuffer, 
-                         const PaStreamCallbackTimeInfo* timeInfo, 
-                         PaStreamCallbackFlags statusFlags, 
-                         void* userData);
+    virtual bool setAudio(const string fileName); // = 0;
+    float getAudio(int i);
+    static int audioCallback(const void* inputBuffer, void* outputBuffer,
+                         unsigned long framesPerBuffer,
+                         const PaStreamCallbackTimeInfo* timeInfo,
+                         PaStreamCallbackFlags statusFlags, void* userData);
     bool playAudio();
-    bool exportAudio();
+    //bool exportAudio();
 };
 
 #endif
