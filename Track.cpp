@@ -23,35 +23,35 @@ string Track::getName() { return name; }
 
 /* *** Callback function ***
 as required by Port Audio library's Pa_OpenDefaultStream function */
-int Track::audioCallback(const void* inputBuffer, void* outputBuffer,
+int Track::audioCallback(const void* inputBuffer, void* _outputBuffer,
                          unsigned long framesPerBuffer,
                          const PaStreamCallbackTimeInfo* timeInfo,
-                         PaStreamCallbackFlags statusFlags, void* userData) {
+                         PaStreamCallbackFlags statusFlags, void* _audioStruct) {
     // Casting userData to our audio data structure
-    AudioData* audioStruct = static_cast<AudioData*>(userData);
-    float* output = static_cast<float*>(outputBuffer);
+    AudioData* audioStruct = static_cast<AudioData*>(_audioStruct);
+    float* outputBuffer = static_cast<float*>(_outputBuffer);
 
     // Safety check for output buffer
-    if (output == nullptr) {
+    if (outputBuffer == nullptr) {
         return paAbort; // Abort the stream if the output buffer is invalid
     }
 
     unsigned long framesToPlay = framesPerBuffer;
 
-    // If near the end of the buffer, adjust the frames to play
+    // If near the end of the buffer, adjust the frames to play to just be the remaining frames
     if (audioStruct->currentFrame + framesPerBuffer > audioStruct->numFrames) {
         framesToPlay = audioStruct->numFrames - audioStruct->currentFrame;
     }
 
-    // Copy audio data from the buffer to the output buffer
+    // Copy the audio data in the audioStruct to the output buffer
     for (unsigned long i = 0; i < framesToPlay; i++) {
-        output[i] = (*audioStruct->audioBuffer)[audioStruct->currentFrame + i];
+        outputBuffer[i] = (*audioStruct->audioBuffer)[audioStruct->currentFrame + i];
     }
 
     // If there are fewer frames than requested, fill remaining buffer with zeros
     for (unsigned long i = framesToPlay; i < framesPerBuffer; i++) {
-        output[i] = 0.0f;
-    }
+        outputBuffer[i] = 0.0f;
+    } //Remove this when include looping functionality
 
     // Increment the current frame counter
     audioStruct->currentFrame += framesToPlay;
@@ -72,10 +72,10 @@ bool Track::playAudio() {
     return false;
   }
 
-  // Initialisaing an AudioData struct and setting Audio to buffer.
-  AudioData data;
-  data.audioBuffer = &Audio;  // Setting address of Audio to audio buffer.
-  data.currentFrame = 0;      // Starting from the beginning of the audio buffer
+  // Initialisaing an AudioData struct and copying Audio's address into the audioBuffer pointer.
+  AudioData audioStruct;
+  audioStruct.audioBuffer = &Audio;  // Setting address of Audio to audio buffer.
+  audioStruct.currentFrame = 0;      // Starting from the beginning of the audio buffer
 
   error =
       Pa_OpenDefaultStream(&stream,
@@ -85,7 +85,11 @@ bool Track::playAudio() {
                            44100,      // Sample rate
                            256,        // Frames per buffer
                            audioCallback,
-                           &data);  // Pass our AudioData struct to the callback
+                           &audioStruct);  // Pass our AudioData struct to the callback, the userData
+if (error != paNoError) {
+    Pa_Terminate();
+    return false;
+  }
 
   error = Pa_StartStream(stream);
   if (error != paNoError) {
