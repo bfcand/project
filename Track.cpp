@@ -1,70 +1,113 @@
+#include <iostream>
+#include <string>
+#include <vector>
+
 #include "Track.h"
 
 #include <portaudio.h>
 #include <sndfile.h>
 
-#include <iostream>
-#include <string>
-#include <vector>
+#include <termios.h>
+#include <unistd.h>
+#include <fcntl.h>
 
 using namespace std;
 
+#define SAMPLE_RATE 44100
 #define MAX_SECONDS 15
 
-// AudioData struct used by the Port Audio callback function.
-struct AudioData {
-  vector<float>* audio;
-  size_t numFrames;     // Pointer to the Track's audio data
-  size_t currentFrame;  // Tracks the current playback position
-};
+bool Track::setAudio(const string fileName) {
+  trackData.audio = &audioData;
+  SF_INFO trackInfo;
 
-void Track::setName(string name) { this->name = name; }
-string Track::getName() { return name; }
+  SNDFILE* file = sf_open(fileName.c_str(), SFM_READ, &trackInfo);
+  // error handling
+  if (file == nullptr) {
+    cerr << "Error opening file: " << sf_strerror(file) << endl;
+    return false;
+  }
+  cout<<"File was successfully opened."<<endl;
 
-/* *** Callback function ***
-as required by Port Audio library's Pa_OpenDefaultStream function */
+  if (trackInfo.samplerate != SAMPLE_RATE) {
+    cout << "Invalid sample rate. Sample rate must be 44.1kHz. Please try "
+            "another file!"
+         << endl;
+    return false;
+  }
+
+  if (trackInfo.channels > 2) {
+    cout << "Invalid number of audio channels. Audio must be mono or stereo. "
+            "Please try another file!"
+         << endl;
+    return false;
+  }
+
+  sf_count_t maxFrames = 0;
+
+  if (trackInfo.channels == 2) {
+    maxFrames = 15 * 2 * 44100;
+  } else if (trackInfo.channels == 1) {
+    maxFrames = 15 * 44100;
+  } else {
+    cout << "An unexpected error has occurred" << endl;
+    return false;
+  }
+cout<<"Set max number of frames."<<endl;
+
+  // resizing the audio vector to the required length.
+  trackData.audio->resize(maxFrames);
+
+  // copying the frames into audio.
+  trackData.numFrames =
+      sf_readf_float(file, trackData.audio->data(), maxFrames);
+
+  // closing file
+  sf_close(file);
+
+  if (trackInfo.channels == 1) {
+    size_t originalSize = trackData.audio->size();
+    trackData.audio->resize(originalSize * 2);
+    for (size_t i = originalSize; i > 0; i--){
+      (*trackData.audio)[(2*(i-1))] = (*trackData.audio)[i-1]; //left channel
+      (*trackData.audio)[2*(i-1)+1] = (*trackData.audio)[i-1]; //right channel
+    }
+    trackInfo.channels = 2;  // Mark as stereo
+    trackData.numFrames *= 2; //There are twice as many frames now
+}
+  return true;
+}
+
 int Track::audioCallback(const void* inputBuffer, void* outputBuffer,
                          unsigned long framesPerBuffer,
                          const PaStreamCallbackTimeInfo* timeInfo,
                          PaStreamCallbackFlags statusFlags, void* audioStruct) {
-    // Casting userData to our audio data structure
-    AudioData* outputStruct = static_cast<AudioData*>(audioStruct);
-    float* output = static_cast<float*>(outputBuffer);
+  // Casting userData to our audio data structure
+  AudioData* trackData = static_cast<AudioData*>(audioStruct);
+  float* output = static_cast<float*>(outputBuffer);
 
-    // Safety check for output buffer
-    if (output == nullptr) {
-        return paAbort; // Abort the stream if the output buffer is invalid
+  // Safety check for output buffer
+  if (output == nullptr) {
+    return paAbort;  // Abort the stream if the output buffer is invalid
+  }
+
+  // Copy audio data into the output buffer
+  for (unsigned long i = 0; i < framesPerBuffer; i++) {
+    // if we've reached the end of the audio sample, start again from beginning.
+    if (trackData->currentFrame == trackData->numFrames) {
+      trackData->currentFrame = 0;
     }
 
-    unsigned long framesToPlay = framesPerBuffer;
+    output[2 * i] = (*trackData->audio)[trackData->currentFrame];  // Left
+    output[2 * i + 1] = (*trackData->audio)[trackData->currentFrame + 1];  // Right
+    trackData->currentFrame += 2;  // Move to the next stereo frame
+  }
 
-    // If near the end of the buffer, adjust the frames to play to just be the remaining frames
-    if (outputStruct->currentFrame + framesPerBuffer > outputStruct->numFrames) {
-        framesToPlay = outputStruct->numFrames - outputStruct->currentFrame;
-    }
-
-    // Copy the audio data in the audioStruct to the output buffer
-    for (unsigned long i = 0; i < framesToPlay; i++) {
-        output[i] = (*outputStruct->audio)[outputStruct->currentFrame + i];
-    }
-
-    // If there are fewer frames than requested, fill remaining buffer with zeros
-    for (unsigned long i = framesToPlay; i < framesPerBuffer; i++) {
-        output[i] = 0.0f;
-    } //Remove this when include looping functionality
-
-    // Increment the current frame counter
-    outputStruct->currentFrame += framesToPlay;
-
-    // Return paComplete if playback is finished, otherwise paContinue
-    return (outputStruct->currentFrame >= outputStruct->numFrames) ? paComplete : paContinue;
+  return paContinue;
 }
 
-
-//*** playAudio function ***
-bool Track::playAudio() {
-  PaStream* stream;
-  PaError error;
+bool Track::playAudioLoop() {
+  PaStream* stream;  // initialising stream
+  PaError error;     // initialising error
 
   // Initializing PortAudio
   error = Pa_Initialize();
@@ -72,82 +115,68 @@ bool Track::playAudio() {
     return false;
   }
 
-  // Initialisaing an AudioData struct and copying Audio's address into the audioBuffer pointer.
-  AudioData audioStruct;
-  audioStruct.audio = &Audio;  // Setting address of Audio to audio buffer.
-  audioStruct.currentFrame = 0;      // Starting from the beginning of the audio buffer
+  // Initialising an AudioData struct and copying Audio's address into the
+  // audioBuffer pointer.
 
-  error =
-      Pa_OpenDefaultStream(&stream,
-                           0,          // 0 input channels
-                           2,          // 1 output channel (all audio files will be converted to stereo)
-                           paFloat32,  // 32-bit floating point output
-                           44100,      // Sample rate
-                           256,        // Frames per buffer
-                           audioCallback,
-                           &audioStruct);  // Pass our AudioData struct to the callback, the userData
-if (error != paNoError) {
+  trackData.currentFrame = 0;
+
+  error = Pa_OpenDefaultStream(
+      &stream,  // location of initialised Pastream
+      0,        // 0 input channels
+      2,  // 2 output channel (all audio files will be converted to stereo)
+      paFloat32,  // 32-bit floating point output
+      44100,      // Sample rate
+      256,        // Frames per buffer
+      audioCallback,
+      &trackData);  // Pass our AudioData struct to the callback, the userData
+
+  if (error != paNoError) {
     Pa_Terminate();
     return false;
   }
-
+bool isPlaying = false;
+cout<<"Enter 's' to start loop."<<endl;
+string input;
+cin>>input;
+  if(input == "s"){
   error = Pa_StartStream(stream);
   if (error != paNoError) {
     Pa_Terminate();
     return false;
   }
-
-   // Wait for the stream to finish (while stream is active)
-    while (Pa_IsStreamActive(stream) == 1) {
-        Pa_Sleep(100);  // Sleep to give time for the audio to process
-    }
-
-    // Stop the stream
-    error = Pa_StopStream(stream);
-    if (error != paNoError) {
-        std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
-    }
-
-    // Close the stream
-    error = Pa_CloseStream(stream);
-    if (error != paNoError) {
-        std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
-    }
-
-    // Terminate PortAudio
-    Pa_Terminate();
-
-  return true;
+isPlaying = true;
+cout<<"Enter 'q' to stop loop."<<endl;
 }
 
-// *** setAudio for derived class Sample ***
-
-bool Track::setAudio(const string fileName) {
-  SF_INFO sfInfo;
-  sfInfo.format = 0;
-
-  SNDFILE* file = sf_open(fileName.c_str(), SFM_READ, &sfInfo);
-
-  if (!file) {
-    cerr << "Error opening file: " << sf_strerror(file) << endl;
-    return false;
+while (isPlaying == true)
+{
+  cin>>input;
+  if(input == "q"){
+    // Stop the stream
+  error = Pa_StopStream(stream);
+  if (error != paNoError) {
+    std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
+  }
+  isPlaying = false;
+  }
+}
+  // Close the stream
+  error = Pa_CloseStream(stream);
+  if (error != paNoError) {
+    std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
   }
 
-  sf_count_t maxFrames = sfInfo.samplerate * 15;
-
-  Audio.resize(maxFrames * sfInfo.channels);
-
-  // Read the audio data into the vector<float> Audio
-  sf_count_t numFrames = sf_readf_float(file, Audio.data(), maxFrames);
-
-  // closing file
-  sf_close(file);
+  // Terminate PortAudio
+  Pa_Terminate();
 
   return true;
 }
 
-float Track::getAudio(int i){
-  return Audio[i];
-}
+void Track::setName(string name) { this->name = name; }
+string Track::getName() { return name; }
+
+// float Track::getAudio(int i){
+//   return trackData.audio[i];
+// }
 
 // bool Track::exportAudio() {}

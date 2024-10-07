@@ -8,21 +8,31 @@
 
 using namespace std;
 
+// struct required by the Port Audio callback function.
+struct AudioData {
+  vector<float>* audio;  // Pointer to the Track's audio data
+  size_t numFrames;
+  size_t currentFrame;  // Tracks the current playback position
+};
+
 class Track {
     protected:
     string name;
-    vector<float> Audio;
+    vector<float> audioData;
+    AudioData trackData;
     public:
-    void setName(string name);
-    string getName();
-    virtual bool setAudio(const string fileName); // = 0;
-    float getAudio(int i);
     static int audioCallback(const void* inputBuffer, void* outputBuffer,
                          unsigned long framesPerBuffer,
                          const PaStreamCallbackTimeInfo* timeInfo,
                          PaStreamCallbackFlags statusFlags, void* userData);
-    bool playAudio();
-    //bool exportAudio();
+    bool playAudioLoop();
+    virtual bool setAudio(const string fileName); // = 0;
+
+    void setName(string name);
+    string getName();
+    float getAudio(int i);
+    int getNumFrames(){return trackData.numFrames;}
 };
+
 
 #endif
