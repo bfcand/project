@@ -1,15 +1,14 @@
+#include "Track.h"
+
+#include <fcntl.h>
+#include <portaudio.h>
+#include <sndfile.h>
+#include <termios.h>
+#include <unistd.h>
+
 #include <iostream>
 #include <string>
 #include <vector>
-
-#include "Track.h"
-
-#include <portaudio.h>
-#include <sndfile.h>
-
-#include <termios.h>
-#include <unistd.h>
-#include <fcntl.h>
 
 using namespace std;
 
@@ -17,7 +16,7 @@ using namespace std;
 #define MAX_SECONDS 15
 
 bool Track::setAudio(const string fileName) {
-  trackData.audio = &audioData;
+  trackData.ptr_audio = &audio;
   SF_INFO trackInfo;
 
   SNDFILE* file = sf_open(fileName.c_str(), SFM_READ, &trackInfo);
@@ -26,7 +25,7 @@ bool Track::setAudio(const string fileName) {
     cerr << "Error opening file: " << sf_strerror(file) << endl;
     return false;
   }
-  cout<<"File was successfully opened."<<endl;
+  cout << "File was successfully opened." << endl;
 
   if (trackInfo.samplerate != SAMPLE_RATE) {
     cout << "Invalid sample rate. Sample rate must be 44.1kHz. Please try "
@@ -52,28 +51,30 @@ bool Track::setAudio(const string fileName) {
     cout << "An unexpected error has occurred" << endl;
     return false;
   }
-cout<<"Set max number of frames."<<endl;
+  cout << "Set max number of frames." << endl;
 
   // resizing the audio vector to the required length.
-  trackData.audio->resize(maxFrames);
+  audio.resize(maxFrames);
 
   // copying the frames into audio.
   trackData.numFrames =
-      sf_readf_float(file, trackData.audio->data(), maxFrames);
+      sf_readf_float(file, audio.data(), maxFrames);
 
   // closing file
   sf_close(file);
 
   if (trackInfo.channels == 1) {
-    size_t originalSize = trackData.audio->size();
-    trackData.audio->resize(originalSize * 2);
-    for (size_t i = originalSize; i > 0; i--){
-      (*trackData.audio)[(2*(i-1))] = (*trackData.audio)[i-1]; //left channel
-      (*trackData.audio)[2*(i-1)+1] = (*trackData.audio)[i-1]; //right channel
+    size_t originalSize = trackData.ptr_audio->size();
+    trackData.ptr_audio->resize(originalSize * 2);
+    for (size_t i = originalSize; i > 0; i--) {
+      audio[(2 * (i - 1))] =
+          audio[i - 1];  // left channel
+      audio[2 * (i - 1) + 1] =
+          audio[i - 1];  // right channel
     }
-    trackInfo.channels = 2;  // Mark as stereo
-    trackData.numFrames *= 2; //There are twice as many frames now
-}
+    trackInfo.channels = 2;    // Mark as stereo
+    trackData.numFrames *= 2;  // There are twice as many frames now
+  }
   return true;
 }
 
@@ -97,8 +98,9 @@ int Track::audioCallback(const void* inputBuffer, void* outputBuffer,
       trackData->currentFrame = 0;
     }
 
-    output[2 * i] = (*trackData->audio)[trackData->currentFrame];  // Left
-    output[2 * i + 1] = (*trackData->audio)[trackData->currentFrame + 1];  // Right
+    output[2 * i] = (*trackData->ptr_audio)[trackData->currentFrame];  // Left
+    output[2 * i + 1] =
+        (*trackData->ptr_audio)[trackData->currentFrame + 1];  // Right
     trackData->currentFrame += 2;  // Move to the next stereo frame
   }
 
@@ -134,32 +136,31 @@ bool Track::playAudioLoop() {
     Pa_Terminate();
     return false;
   }
-bool isPlaying = false;
-cout<<"Enter 's' to start loop."<<endl;
-string input;
-cin>>input;
-  if(input == "s"){
-  error = Pa_StartStream(stream);
-  if (error != paNoError) {
-    Pa_Terminate();
-    return false;
+  bool isPlaying = false;
+  cout << "Enter 's' to start loop." << endl;
+  string input;
+  cin >> input;
+  if (input == "s") {
+    error = Pa_StartStream(stream);
+    if (error != paNoError) {
+      Pa_Terminate();
+      return false;
+    }
+    isPlaying = true;
+    cout << "Enter 'q' to stop loop." << endl;
   }
-isPlaying = true;
-cout<<"Enter 'q' to stop loop."<<endl;
-}
 
-while (isPlaying == true)
-{
-  cin>>input;
-  if(input == "q"){
-    // Stop the stream
-  error = Pa_StopStream(stream);
-  if (error != paNoError) {
-    std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
+  while (isPlaying == true) {
+    cin >> input;
+    if (input == "q") {
+      // Stop the stream
+      error = Pa_StopStream(stream);
+      if (error != paNoError) {
+        std::cerr << "PortAudio error: " << Pa_GetErrorText(error) << std::endl;
+      }
+      isPlaying = false;
+    }
   }
-  isPlaying = false;
-  }
-}
   // Close the stream
   error = Pa_CloseStream(stream);
   if (error != paNoError) {
@@ -172,11 +173,8 @@ while (isPlaying == true)
   return true;
 }
 
+float Track::getAudio(int i) { return audio[i]; }
+
 void Track::setName(string name) { this->name = name; }
+
 string Track::getName() { return name; }
-
-// float Track::getAudio(int i){
-//   return trackData.audio[i];
-// }
-
-// bool Track::exportAudio() {}

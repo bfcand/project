@@ -10,7 +10,7 @@ using namespace std;
 
 // struct required by the Port Audio callback function.
 struct AudioData {
-  vector<float>* audio;  // Pointer to the Track's audio data
+  vector<float>* ptr_audio;  // Pointer to the Track's audio data
   size_t numFrames;
   size_t currentFrame;  // Tracks the current playback position
 };
@@ -18,7 +18,7 @@ struct AudioData {
 class Track {
     protected:
     string name;
-    vector<float> audioData;
+    vector<float> audio;
     AudioData trackData;
     public:
     static int audioCallback(const void* inputBuffer, void* outputBuffer,
@@ -26,7 +26,7 @@ class Track {
                          const PaStreamCallbackTimeInfo* timeInfo,
                          PaStreamCallbackFlags statusFlags, void* userData);
     bool playAudioLoop();
-    virtual bool setAudio(const string fileName); // = 0;
+    bool setAudio(const string fileName); // = 0;
 
     void setName(string name);
     string getName();
