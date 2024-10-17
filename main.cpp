@@ -31,7 +31,7 @@ int main(void) {
 
   while (continueProgram) {
     selection = 0;
-    cout << "Main menu:\nType and enter: 's' to edit, delete or create a "
+    cout << "Main menu:\nType and enter: 's' to create, edit, or delete a "
             "sample, 'm' "
             "to hear mix, or 'l' "
             "to create, listen to or write a loop.\nType and enter 'q' to "
@@ -41,7 +41,8 @@ int main(void) {
       if (!(cin >> selection)) {
         cout << "Invalid input, please try again." << endl;
         cin >> selection;
-      } else if (selection != 's' && selection != 'l' && selection != 'q') {
+      } else if (selection != 's' && selection != 'l' && selection != 'm' &&
+                 selection != 'q') {
         cout << "Invalid input, please try again." << endl;
       } else {
         break;
@@ -74,7 +75,7 @@ int main(void) {
         }
 
         if (selection == 'a') {  // 'add sample' option
-          //continueSubSelection = true;
+          // continueSubSelection = true;
 
           Rhythmic* newSample = new Rhythmic;
           string newFileName = "";
@@ -118,8 +119,7 @@ int main(void) {
               }
             }
 
-
-            if (continueSubSelection) { //if we have read an audio file
+            if (continueSubSelection) {  // if we have read an audio file
               // setting name of sample
               string* tempName = new string;
               cout
@@ -172,7 +172,6 @@ int main(void) {
                   newSample->playAudioLoop(newSample->getdefaultAudio());
                 } else if (selection == 'b') {
                   continueSubSelection = false;
-                  continueMainSelection = false;
                   break;
                 } else {
                   cout << "Invalid selection, please try again." << endl;
@@ -181,102 +180,273 @@ int main(void) {
             }
           }
         } else if (selection == 'e') {  // edit existing sample
-        string* nameInput = new string;
-        while (continueSubSelection = true) {
-        mix.getSampleNames();
-          cout << "Please enter the name of the sample that you would like to "
-                  "edit:"
-               << endl;
-          cin >> *nameInput;
-          Sample* sampleToEdit = mix.findSample(*nameInput);
-
-          if (sampleToEdit == nullptr) {
-            cout << "Sample: " << *nameInput << " does not exist." << endl;
-
+          string* nameInput = new string;
+          Sample* sampleToEdit = nullptr;
+          while (continueSubSelection == true) {
             for (;;) {
-              cout << "Type and enter 'y' to try again, or b to return to the sample menu."
+              cout << "Type and enter 'y' to proceed to edit file, or 'b' to "
+                      "return to "
+                      "the sample menu."
                    << endl;
-              cin.clear();
-              cin.ignore(numeric_limits<streamsize>::max(), '\n');
               cin >> selection;
 
               if (selection == 'b') {
                 delete nameInput;
-                continueSubSelection = false;
+                delete sampleToEdit;
                 continueSubSelection = false;
                 break;
 
               } else if (selection == 'y') {
                 break;
               } else {
-                cout<<"Invalid selection, please try again."<<endl;}
-            } 
-          } else {
-            sampleToEdit->editSample();
-            // sampleToEdit->writePattern();
-          } 
+                cout << "Invalid selection, please try again." << endl;
+              }
+            }
+            while (continueSubSelection) {
+              mix.getSampleNames();
+              cout << "Please enter the name of the sample that you would like "
+                      "to "
+                      "edit:"
+                   << endl;
+              cin >> *nameInput;
+              sampleToEdit = mix.findSample(*nameInput);
+              getchar();  // getting '\n' character from terminal
+              if (sampleToEdit == nullptr) {
+                cout << "Sample '" << *nameInput << "' does not exist." << endl;
+                break;
+              } else {
+                delete nameInput;  // deallocating dynamic temporary string
+                sampleToEdit->editSample();  // entering pattern editor mode
+                sampleToEdit
+                    ->writeSample();  // writing new pattern to audio vector
+                for (;;) {
+                  selection = 0;
+
+                  cout
+                      << "Type and enter: 'p' to play and stop audio pattern, "
+                         "'e' to continue editing pattern, or 'b' to return to "
+                         "sample menu."
+                      << endl;
+                  cin >> selection;
+                  if (selection == 'e') {
+                    getchar();  // gets \n character
+                    sampleToEdit->editSample();
+                    sampleToEdit->writeSample();
+                  } else if (selection == 'p') {
+                    sampleToEdit->playAudioLoop(
+                        sampleToEdit->getdefaultAudio());
+                  } else if (selection == 'b') {
+                    continueSubSelection = false;
+                    continueMainSelection = false;
+                    break;
+                  } else {
+                    cout << "Invalid selection, please try again." << endl;
+                  }
+                }
+              }
+            }
           }
-          
+
         } else if (selection == 'd') {  // delete existing sample
+          string* nameInput = new string;
+          while (continueSubSelection == true) {
+            for (;;) {
+              cin.clear();
+              cin.ignore(numeric_limits<streamsize>::max(), '\n');
+              cout << "Type and enter 'y' to delete a sample, or 'b' to return "
+                      "to the sample menu."
+                   << endl;
+              cin >> selection;
+              if (selection == 'b') {
+                delete nameInput;
+                continueSubSelection = false;
+                break;
+              } else if (selection == 'y') {
+                mix.getSampleNames();
+                cout << "Please enter the name of the sample that you would "
+                        "like "
+                        "to "
+                        "delete:"
+                     << endl;
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cin >> *nameInput;
 
-      } else if (selection == 'b') {  // go back to main menu
-        continueSubSelection = false;
-        continueMainSelection = false;
-      } else {
-        cout<<"Invalid selection, please try again."<<endl;
-      }
+                if (mix.deleteSample(*nameInput)) {
+                  cout << "Sample successfully deleted" << endl;
+                  delete nameInput;
+                  continueSubSelection = false;
+                  break;
+                } else {
+                  cout << "Sample: " << *nameInput << " was not deleted"
+                       << endl;
+                }
 
+              } else {
+                cout << "Invalid selection, please try again." << endl;
+              }
+            }
+          }
+
+        } else if (selection == 'b') {  // go back to main menu
+          continueSubSelection = false;
+          continueMainSelection = false;
+        } else {
+          cout << "Invalid selection, please try again." << endl;
+        }
       }
-      
     }
 
-    // Mix
-    if (selection == 'm') {
+    else if (selection == 'm') {  // Mix
       selection = 0;
-      cout << "Type and enter 'p' to play/stop loop, or 'b' to return to "
-              "main menu."
-           << endl;
-      for (;;) {
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cin >> selection;
-        if (selection == 'p') {
-          if (mix.getNumSamples() < 1) {
-            cout << "Nothing to play, no samples in mix! Return to main menu "
-                    "to add a new sample."
-                 << endl;
-          } else {
+      if (!mix.writeMix()) {
+        cout << "Nothing to play, no samples in mix! Return to main menu to "
+                "add a new sample."
+             << endl;
+      } else {
+        cout << "Type and enter 'p' to play/stop loop, or 'b' to return to "
+                "main menu."
+             << endl;
+        for (;;) {
+          cin.clear();
+          cin.ignore(numeric_limits<streamsize>::max(), '\n');
+          cin >> selection;
+          if (selection == 'p') {
             mix.playAudioLoop(mix.gettrackData());
+          } else if (selection == 'b') {
+            break;
+          } else {
+            cout << "Invalid input, please try again." << endl;
           }
-        } else if (selection == 'b') {
-          break;
-        } else {
-          cout << "Invalid input, please try again." << endl;
         }
       }
     }
 
     // Loop
-    if (selection == 'l') {
-      selection = 0;
-      cout << "Type and enter: 'a' to add loop, 'd' to delete loop, 'v' to "
-              "view and play loops, 'w' to write loop to hard drive, or 'b' to "
-              "go back."
-           << endl;
-      for (;;) {
-        cin.clear();
-        cin.ignore(numeric_limits<streamsize>::max(), '\n');
-        cin >> selection;
-        if (selection != 'a' && selection != 'd' && selection != 'w') {
+    else if (selection == 'l') {
+      continueSubSelection = true;
+      while (continueSubSelection) {
+        selection = 0;
+        cout << "Type and enter: 'c' to create loop from mix, 'd' to delete a "
+                "loop, 'v' to "
+                "view and play loops, 'w' to write loop to hard drive, or 'b' "
+                "to "
+                "go back."
+             << endl;
+        for (;;) {
+          cin.clear();
+          cin.ignore(numeric_limits<streamsize>::max(), '\n');
+          cin >> selection;
+
+          if (selection == 'c') {
+            cout << "Type and enter 'y' to create a loop out of the current "
+                    "mix, "
+                    "or 'b' to go back."
+                 << endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin >> selection;
+
+            if (selection == 'y') {
+              if (!mix.writeMix()) {
+                cout << "Nothing to create, no samples in mix! Return to main "
+                        "menu "
+                        "to "
+                        "add a new sample."
+                     << endl;
+              } else {
+                Loop* newLoop = new Loop(&mix);
+                newLoop->setAudio();
+
+                string* tempName = new string;  // choosing name for loop
+                cout
+                    << "Please choose a name for your loop of max 12 characters"
+                    << endl;
+                for (;;) {
+                  cin >> *tempName;
+                  if (tempName->size() > 12) {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout
+                        << "Name exceeds 12 characters in length. Please enter "
+                           "another name."
+                        << endl;
+                  } else if (*tempName == "") {
+                    cin.clear();
+                    cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                    cout << "Please enter at least one character." << endl;
+                  } else {
+                    newLoop->setName(*tempName);
+                    delete tempName;
+                    break;
+                  }
+                }
+              }
+            }
+          } else if (selection == 'd') {
+            string* nameInput = new string;
+            while (continueSubSelection == true) {
+              for (;;) {
+                cin.clear();
+                cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                cout << "Type and enter 'y' to delete a loop, or 'b' to return "
+                        "to the loop menu."
+                     << endl;
+                cin >> selection;
+                if (selection == 'b') {
+                  delete nameInput;
+                  continueSubSelection = false;
+                  break;
+                } else if (selection == 'y') {
+                  library.getLoopNames();
+                  cout << "Please enter the name of the loop that you would "
+                          "like "
+                          "to "
+                          "delete:"
+                       << endl;
+                  cin.clear();
+                  cin.ignore(numeric_limits<streamsize>::max(), '\n');
+                  cin >> *nameInput;
+
+                  if (library.deleteLoop(*nameInput)) {
+                    cout << "Loop '" << *nameInput << "' successfully deleted"
+                         << endl;
+                    delete nameInput;
+                  } else {
+                    cout << "Loop: " << *nameInput << " was not deleted"
+                         << endl;
+                  }
+                } else {
+                  cout << "Invalid selection, please try again." << endl;
+                }
+              }
+            }
+
+          }
+
+          else if (selection == 'v') { //view and play loops
+          }
+
+          else if (selection = 'w') { //write loops: prioritise this one
+          }
+
+          else if (selection == 'b') {
+            continueSubSelection = false;
+            break;
+          }
+
+          else {
+            cout << "Invalid selection, please try again." << endl;
+          }
         }
       }
     }
 
     // Quit
-    if (selection == 'q') {  // quit
+    else if (selection == 'q') {  // quit
       while (true) {
         cout << "Are you sure you want to quit? All loops unwritten to file "
-                "shall be lost.\nType and enter 'y' to confirm or 'n' to go "
+                "shall be lost.\nType and enter 'y' to confirm or 'b' to go "
                 "back."
              << endl;
         cin.clear();
@@ -286,7 +456,7 @@ int main(void) {
           cout << "Okay, goodbye!" << endl;
           continueProgram = false;
           break;
-        } else if (selection == 'n') {
+        } else if (selection == 'b') {
           break;
         } else {
           cout << "Invalid selection, please try again." << endl;

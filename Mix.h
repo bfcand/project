@@ -18,7 +18,7 @@ public:
 //setAudio
 Mix();
 ~Mix();
-void writeMix();
+bool writeMix();
 bool setAudio(); //calls the writeMix function
 bool addSample(Sample* newSample);
 bool deleteSample(std::string name);

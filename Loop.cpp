@@ -11,11 +11,14 @@ using namespace std;
 // bool Loop::setAudio(){} this will become an abstract class and this version of the function
 // will set audio to mix's audio track.
 
+Loop::Loop(Mix* currentMix){this->newLoop = currentMix;}
+
 Loop::Loop(){}
 
 Loop::~Loop(){}
 
 bool Loop::setAudio(){
+
 trackData.audio = newLoop->getdefaultAudio()->audio; // copying the audio from the mix into the the loop's trackData audio vector
 trackData.numFrames = newLoop->getdefaultAudio()->numFrames; // copying the number of frames from the mix into the loop's trackData frames variable
 defaultAudio = &trackData;

@@ -12,6 +12,7 @@ private:
 Mix* newLoop;
 
 public:
+Loop(Mix* currentMix);
 Loop();
 ~Loop();
 bool setAudio(); //sets the loop's audio as the current Mix

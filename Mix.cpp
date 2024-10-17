@@ -33,13 +33,27 @@ bool Mix::addSample(Sample* newSample){
 }
 
 bool Mix::deleteSample(string name){
+    char selection = 0;
     for (int i = 0; i < 6; i++){
+        if(samples[i]!=nullptr){
         if(samples[i]->getName() == name){
+            cout << "Are you sure you want to delete "<<name<<"?\nType and enter 'y' for yes or 'b' to go back"<<endl;
+            cin.clear();
+            cin.ignore(numeric_limits<streamsize>::max(), '\n');
+            cin>>selection;
+            if (selection == 'y') {
             delete samples[i];
             samples[i] = nullptr;
             return true;
+              } else if (selection == 'b') {
+                return false;
+              } else {
+                cout<<"Invalid selection, please try again."<<endl;
+                }
+        }
         }
     }
+    cout<<"No sample called "<<name<<" was found."<<endl;
     return false;
 }
 
@@ -73,7 +87,11 @@ int Mix::getNumSamples(){
     return numSamples;
 }
 
-void Mix:: writeMix(){
+bool Mix:: writeMix(){
+
+if(getNumSamples() < 1){
+    return false; //no samples to write
+}
 trackData.audio.resize(22050*8);
 trackData.numFrames = 22050*8; //2 bar pattern at 120 BPM;
 for (int i = 0; i < 6;i++){
@@ -86,10 +104,9 @@ for (int i = 0; i < 6;i++){
                     trackData.audio[j] = trackData.audio[j] + samples[i]->getAudio(j,samples[i]->getdefaultAudio());
             }  // copies across and layers the audio data from each of the samples
         }
-        cout<<"wrote sample "<<i<<" to mix"<<endl;
 }
 }
-
+return true;
 //rescaling if max abs amplitude exceeds 1
 // float maxSample = abs(*max_element(trackData.audio.begin(),(trackData.audio.end()-1)));
 
