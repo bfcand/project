@@ -2,6 +2,7 @@
 
 #include <portaudio.h>
 #include <sndfile.h>
+
 #include <termios.h>
 #include <unistd.h>
 
@@ -69,49 +70,52 @@ void Rhythmic::editPattern() {
 }
 
 bool Rhythmic::writePattern() {
-  patternAudio.resize(
-      22050 * 8,
-      0.0f);  // resizing the audio vector to fit the desired number of samples
+  
+  patternData.audio.resize(22050 * 8, 0.0f);  // resizing the audio vector to fit the desired number of samples
+  patternData.numFrames = 22050*8; //setting num frames to patternData
 
-  vector<float>::iterator itr_pattern = patternAudio.begin();
-  vector<float>::iterator itr_audio;
+  vector<float>::iterator itr_pattern = patternData.audio.begin();
+
+cout<<"audio in trackData: "<<endl;
+for (int i = 0; i < 10; i++){
+  cout<<trackData.audio[i]<<endl;
+}
 
   int patternWriteIndex = 0;
   int semiQuaverLength;
-  int semiQuaverIndex = 0;
+  //int semiQuaverIndex = 0;
 
   // for bars 1 and 2
   for (int i = 0; i < 2; i++) {
     // for semi quavers 1 to 16
     for (int j = 0; j < 16; j++) {
-      semiQuaverLength =
-          (j % 2 == 0) ? 5512 : 5513;  // first or second semi quaver
+      semiQuaverLength =(j % 2 == 0) ? 5512 : 5513;  // first or second semi quaver
 
       if (pattern[i][j] == 1) {
-        for (itr_audio = audio.begin(); itr_audio != audio.end(); ++itr_audio) {
-          if (itr_pattern >= patternAudio.end()) {
+        cout<<"Rhythm identified!"<<endl;
+
+        for (int i = 0; i < trackData.numFrames;i++){
+
+          if (itr_pattern >= (patternData.audio.end()-1)) {
             break;
           }
-          *itr_pattern = *itr_audio;  // copying audio sample into pattern
+          *itr_pattern = trackData.audio[i];  // copying audio sample into pattern
           itr_pattern++;
         }
       }
-
-      patternWriteIndex += (semiQuaverLength - 1);
-      itr_pattern = patternAudio.begin() +
-                    patternWriteIndex;  // positining itr to next semiquaver.
-      semiQuaverIndex++;
-      cout << "semi quaver " << semiQuaverIndex << " was written" << endl;
+      patternWriteIndex += semiQuaverLength;
+      itr_pattern = patternData.audio.begin() + patternWriteIndex;  // positining itr to next semiquaver.
+      cout<<"patternWriteIndex: "<<itr_pattern-patternData.audio.begin()<<endl;
     }
   }
   
-  return true;
+  
+return true;
 }
 
 bool Rhythmic::setAudio(){
 
-trackData.audio = &patternAudio; //setting trackData pointer address to patternAudio
-trackData.numFrames = 22050*8; //setting num frames to trackData
+defaultAudio = &patternData;
 
 return true;
 }
@@ -145,6 +149,10 @@ void Rhythmic::printPattern(int cursorPos, int cursorRow) {
     std::cout << "]" << std::endl;
   }
 }
+
+AudioData* Rhythmic::getPatternData(){return &patternData;}
+
+float Rhythmic::getPatternAudio(int i){return patternData.audio[i];};
 
 //function for modifying pattern in the terminal
 void Rhythmic::setRawMode(bool enable) {

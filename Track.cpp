@@ -13,12 +13,6 @@ using namespace std;
 #define SAMPLE_RATE 44100
 #define MAX_SECONDS 15
 
-// struct AudioData {
-//   std::vector<float>* audio;  // Pointer to the Track's audio data
-//   unsigned long numFrames;
-//   unsigned long currentFrame;  // Tracks the current playback position
-// };
-
 Track::Track(string name) {
   this->name = name;
   }
@@ -39,8 +33,12 @@ for (int i = 0; i < framesPerBuffer;i++){
     out[i] = data->audio[data->currentFrame];
     data->currentFrame++;
 
-    if(data->currentFrame == data->numFrames){
-        for (int j = i; j < framesPerBuffer; j++){
+    if(data->currentFrame >= data->numFrames){
+        data->currentFrame = 0;
+    }
+
+    if(data->play == false){
+      for (int j = i; j < framesPerBuffer; j++){
 
             out[j] = 0.0f;
             return paComplete;
@@ -50,9 +48,10 @@ for (int i = 0; i < framesPerBuffer;i++){
 return paContinue;
 }
 
-bool Track::playAudioLoop() {
+bool Track::playAudioLoop(AudioData* audioData) {
 
-trackData.currentFrame = 0;
+audioData->currentFrame = 0;
+audioData->play = true;
 
 Pa_Initialize();
 
@@ -66,20 +65,34 @@ Pa_OpenDefaultStream(
                     44100,
                     256,
                     audioCallback,
-                    &trackData);
+                    audioData);
 
 Pa_StartStream(stream);
 
-Pa_Sleep(2000);
+//stopping the loop
+string stopInput;
+string clearBuffer;
+cin>>clearBuffer;
+while (trackData.play){
+cin>>stopInput;
+if(stopInput=="q"){
+  trackData.play = false;
+}
+}
 
 Pa_StopStream(stream);
+
 
 Pa_Terminate();
 
 return true;
 }
 
-float Track::getAudio(int i) { return trackData.audio[i]; }
+AudioData* Track::gettrackData(){return &trackData;}
+
+float Track::getAudio(int i, AudioData* data) { return data->audio[i]; }
+
+ AudioData* Track::getdefaultAudio(){ return defaultAudio; }
 
 int Track::getNumSamples(){return trackData.numFrames; }
 

@@ -13,6 +13,7 @@ std::string fileName;
 public:
 Sample(std::string file):volume(100),fileName(file){}
 Sample():Sample(""){}
+virtual ~Sample(){};
 void setfileName(std::string fileName);
 std::string getfileName();
 bool readAudio();

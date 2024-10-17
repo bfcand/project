@@ -9,7 +9,7 @@
 using namespace std;
 
 Library::Library(){
-loops[10] = { nullptr };
+loops = new Loop*[10]{nullptr};
 };
 
 Library::~Library(){
@@ -27,14 +27,14 @@ Loop* Library::selectLoop(string name) {
     }
     return nullptr;
 }
-Loop* Library::addLoop() {
+bool Library::addLoop(Loop* loop) {
     for (int i = 0; i < 10; i++){
         if(loops[i]==nullptr){
-            loops[i] == new Loop;
-            return loops[i];
+            loops[i] = loop;
+            return true;
         }
     }
-    return nullptr;
+    return false;
 }
 bool Library::deleteLoop(string name) {
     for (int i = 0; i < 10; i++){

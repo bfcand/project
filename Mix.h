@@ -20,7 +20,7 @@ Mix();
 ~Mix();
 void writeMix();
 bool setAudio(); //calls the writeMix function
-bool createSample();
+bool addSample(Sample* newSample);
 bool deleteSample(std::string name);
 Sample* editSample(std::string name);
 void getSampleNames();

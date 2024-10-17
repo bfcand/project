@@ -1,4 +1,5 @@
-
+#ifndef LIBRARY_H
+#define LIBRARY_H
 #include <string>
 
 #include "Loop.h"
@@ -11,7 +12,9 @@ class Library {
     Library();
     ~Library();
     Loop* selectLoop(std::string name);
-    Loop* addLoop();
+    bool Library::addLoop(Loop* loop);
     bool deleteLoop(std::string name);
     void getLoopNames();
 };
+
+#endif

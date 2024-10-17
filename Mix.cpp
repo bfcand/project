@@ -12,26 +12,34 @@
 using namespace std;
 
 Mix::Mix(){
-samples[6] = { nullptr };
+samples = new Sample*[6]{nullptr};
+// for (int i = 0; i < 6;i++){
+//     samples[i] = nullptr;
+// };
 }
 Mix::~Mix(){
 for (int i = 0; i < 6;i++){
+    if(samples[i]!= nullptr){
 delete[] samples[i];
+   }
 }
 }
 
-bool Mix::createSample(){
+bool Mix::addSample(Sample* newSample){
     for (int i = 0; i < 6; i++){
         if (samples[i] == nullptr){
-            samples[i] = new Sample;
+            samples[i] = newSample;
+            return true;
         }
     }
+    return false;
 }
 
 bool Mix::deleteSample(string name){
     for (int i = 0; i < 6; i++){
         if(samples[i]->getName() == name){
             delete samples[i];
+            samples[i] = nullptr;
             return true;
         }
     }
@@ -57,29 +65,36 @@ void Mix::getSampleNames(){
 }
 
 void Mix:: writeMix(){
-audio.resize(22050*8);
+trackData.audio.resize(22050*8);
+trackData.numFrames = 22050*8; //2 bar pattern at 120 BPM;
 for (int i = 0; i < 6;i++){
-        if(samples[i]!=nullptr){
-            for (int i = 0; i < 22050*8; i++){
-                audio[i] += samples[i]->getAudio(i);
-            }  
-        }
-    }
-//rescaling if max abs amplitude exceeds 1
-float maxSample = abs(*max_element(audio.begin(),audio.end()));
+        if(samples[i]!= nullptr){
+            for (int j = 0; j < 22050*8; j++){
 
-if(maxSample > 1){
-    vector<float>::iterator itr;
-    for(itr = audio.begin();itr<audio.end();itr++){
-    *itr = *itr/maxSample;
-    }
+                 if(j >= samples[i]->getdefaultAudio()->numFrames){
+                     //cout<<"sample"<< i <<" is shorter than 22050*8" << endl;
+                 } else {
+                    trackData.audio[j] = trackData.audio[j] + samples[i]->getAudio(j,samples[i]->getdefaultAudio());
+            }  // copies across and layers the audio data from each of the samples
+        }
+        cout<<"wrote sample "<<i<<" to mix"<<endl;
 }
 }
+
+//rescaling if max abs amplitude exceeds 1
+// float maxSample = abs(*max_element(trackData.audio.begin(),(trackData.audio.end()-1)));
+
+// if(maxSample > 1){
+//     vector<float>::iterator itr;
+//     for(itr = trackData.audio.begin();itr<trackData.audio.end();itr++){
+//     *itr = *itr/maxSample;
+//     }
+// }
+ }
 
 bool Mix::setAudio(){
 
-trackData.audio = &audio;
-trackData.numFrames = 22050*8; //2 bar pattern at 120 BPM;
+defaultAudio = &trackData;
 
 return true;
 }

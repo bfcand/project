@@ -1,4 +1,5 @@
-
+#ifndef LOOP_H
+#define LOOP_H
 #include <string>
 #include <vector>
 
@@ -14,5 +15,8 @@ public:
 Loop();
 ~Loop();
 bool setAudio(); //sets the loop's audio as the current Mix
-bool setMix(Mix* newLoop);
+void setMix(Mix* newLoop);
+bool writeToFile();
 };
+
+#endif

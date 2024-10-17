@@ -11,7 +11,6 @@
 
 using namespace std;
 
-
 void Sample::setfileName(string fileName){
     this->fileName = fileName;
 }
@@ -21,6 +20,7 @@ string Sample::getfileName(){return fileName;};
 bool Sample::readAudio() {
 
 SF_INFO trackInfo;
+trackInfo.format = 0; //as required per sndfile documentation
 SNDFILE* file = sf_open(fileName.c_str(), SFM_READ, &trackInfo);
 
 if(trackInfo.channels != 1){
