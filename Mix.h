@@ -22,8 +22,9 @@ void writeMix();
 bool setAudio(); //calls the writeMix function
 bool addSample(Sample* newSample);
 bool deleteSample(std::string name);
-Sample* editSample(std::string name);
+Sample* findSample(std::string name);
 void getSampleNames();
+int getNumSamples();
 };
 
 #endif

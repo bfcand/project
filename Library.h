@@ -12,7 +12,7 @@ class Library {
     Library();
     ~Library();
     Loop* selectLoop(std::string name);
-    bool Library::addLoop(Loop* loop);
+    bool addLoop(Loop* loop);
     bool deleteLoop(std::string name);
     void getLoopNames();
 };

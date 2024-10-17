@@ -13,8 +13,8 @@ public:
 Rhythmic();
 ~Rhythmic();
 int** getPattern ();
-void editPattern();
-bool writePattern();
+void editSample();
+bool writeSample();
 bool setAudio();
 void printPattern(int cursorPos, int cursorRow);
 void setRawMode(bool enable);

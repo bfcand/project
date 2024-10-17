@@ -13,9 +13,6 @@ using namespace std;
 
 Mix::Mix(){
 samples = new Sample*[6]{nullptr};
-// for (int i = 0; i < 6;i++){
-//     samples[i] = nullptr;
-// };
 }
 Mix::~Mix(){
 for (int i = 0; i < 6;i++){
@@ -46,22 +43,34 @@ bool Mix::deleteSample(string name){
     return false;
 }
 
-Sample* Mix::editSample(string name){
+Sample* Mix::findSample(string name){
     for (int i = 0; i < 6; i++){
+        if(samples[i]!= nullptr){
         if(samples[i]->getName() == name){
             return samples[i];
+        }
         }
     }
     return nullptr;     
 }
 
 void Mix::getSampleNames(){
-    cout<<"Samples:"<<endl;
+    cout<<"Current samples in mix:"<<endl;
     for (int i = 0; i < 6;i++){
         if(samples[i]!=nullptr){
             cout<<samples[i]->getName()<<endl;
         }
     }
+}
+
+int Mix::getNumSamples(){
+    int numSamples = 0;
+    for (int i = 0; i < 6;i++){
+        if(samples[i]!=nullptr){
+           numSamples++;
+        }
+    }
+    return numSamples;
 }
 
 void Mix:: writeMix(){

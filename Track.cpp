@@ -15,7 +15,11 @@ using namespace std;
 
 Track::Track(string name) {
   this->name = name;
+  defaultAudio = &trackData;
   }
+Track::Track(): Track("") {};
+
+Track::~Track(){};
 
 int Track::audioCallback(const void* inputBuffer,
                     void* outputBuffer,
@@ -75,7 +79,7 @@ string clearBuffer;
 cin>>clearBuffer;
 while (trackData.play){
 cin>>stopInput;
-if(stopInput=="q"){
+if(stopInput=="p"){
   trackData.play = false;
 }
 }

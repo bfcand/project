@@ -22,9 +22,9 @@ class Track {
   AudioData* defaultAudio; // pointer to selected audio struct
 
  public:
-  Track(std::string name);  // constructor
-  Track() : Track("") {};   // default constructor
-  virtual ~Track(){}
+  Track(std::string name);
+  Track();   // default constructor
+  virtual ~Track();
   virtual bool setAudio() = 0;  // abstract function for writing track's audio
   
   static int audioCallback(const void* inputBuffer, void* outputBuffer,

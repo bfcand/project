@@ -17,6 +17,8 @@ virtual ~Sample(){};
 void setfileName(std::string fileName);
 std::string getfileName();
 bool readAudio();
+virtual void editSample() = 0;
+virtual bool writeSample() = 0;
 bool setAudio(); //calls the readAudio function
 bool setVolume(int newVolume);
 int getVolume();

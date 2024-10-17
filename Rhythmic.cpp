@@ -31,7 +31,7 @@ Rhythmic::~Rhythmic() {
 
 int** Rhythmic::getPattern() { return pattern; }
 
-void Rhythmic::editPattern() {
+void Rhythmic::editSample() { // editSample for the Rhythmic derived class is a rhythm pattern editor
   int cursorPos = 0;  // Current column
   int cursorRow = 0;  // Current row (0 or 1)
 
@@ -54,7 +54,7 @@ void Rhythmic::editPattern() {
       } else if (ch == 'D') {               // Left arrow
         cursorPos = (cursorPos + 15) % 16;  // Move left, wrap around
       }
-    } else if (ch == 'q') {  // Quit on 'q' key
+    } else if (ch == '\n') {  // Quit on return/enter key
       break;
     } else if (ch == '1') {  // User can manually toggle between 0 and 1
       pattern[cursorRow][cursorPos] = 1;
@@ -69,31 +69,24 @@ void Rhythmic::editPattern() {
   setRawMode(false);  // Exit raw mode
 }
 
-bool Rhythmic::writePattern() {
+bool Rhythmic::writeSample() { // writeSample = writePattern for Rhythmic class
   
   patternData.audio.resize(22050 * 8, 0.0f);  // resizing the audio vector to fit the desired number of samples
   patternData.numFrames = 22050*8; //setting num frames to patternData
 
   vector<float>::iterator itr_pattern = patternData.audio.begin();
 
-cout<<"audio in trackData: "<<endl;
-for (int i = 0; i < 10; i++){
-  cout<<trackData.audio[i]<<endl;
-}
-
   int patternWriteIndex = 0;
   int semiQuaverLength;
-  //int semiQuaverIndex = 0;
 
   // for bars 1 and 2
   for (int i = 0; i < 2; i++) {
+
     // for semi quavers 1 to 16
     for (int j = 0; j < 16; j++) {
       semiQuaverLength =(j % 2 == 0) ? 5512 : 5513;  // first or second semi quaver
 
       if (pattern[i][j] == 1) {
-        cout<<"Rhythm identified!"<<endl;
-
         for (int i = 0; i < trackData.numFrames;i++){
 
           if (itr_pattern >= (patternData.audio.end()-1)) {
@@ -105,7 +98,6 @@ for (int i = 0; i < 10; i++){
       }
       patternWriteIndex += semiQuaverLength;
       itr_pattern = patternData.audio.begin() + patternWriteIndex;  // positining itr to next semiquaver.
-      cout<<"patternWriteIndex: "<<itr_pattern-patternData.audio.begin()<<endl;
     }
   }
   
@@ -122,6 +114,7 @@ return true;
 
 //function for printing pattern in the terminal
 void Rhythmic::printPattern(int cursorPos, int cursorRow) {
+  cout<<"Please write a rhythmic pattern for your sample. Once finished, press 'enter' to continue."<<endl;
   for (int i = 0; i < 2; i++) {
     if (cursorPos == 0 && i == cursorRow) {
       std::cout << "[";
