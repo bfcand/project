@@ -51,8 +51,8 @@ bool Loop::writeToFile(){
 
     int writeIndex = 0;
     loopAudioToWrite.resize(numLoops*(trackData.audio.size()));
-    cout<<"size of loopAudioToWrite: "<<loopAudioToWrite.size()<<endl;
-    cout<<"resized write vector to: "<<loopAudioToWrite.size()<<endl;
+    //cout<<"size of loopAudioToWrite: "<<loopAudioToWrite.size()<<endl;
+    //cout<<"resized write vector to: "<<loopAudioToWrite.size()<<endl;
     
     for (int i = 0; i < numLoops; i++){
 
@@ -60,21 +60,14 @@ bool Loop::writeToFile(){
         cout<<"trackData audio size: "<<trackData.audio.size()<<endl;
 
         for (int j = 0; j < trackData.audio.size();j++){
-            if (j == 0){
-                cout<<"j is 0"<<endl;
-            }
             if(writeIndex >= loopAudioToWrite.size()){
                 break;
             }
             loopAudioToWrite[writeIndex] = trackData.audio[j];
-            // if(i == 0){
-            //     cout<<"wrote sample"<<endl;
-            // }
             writeIndex++;
         }
 
     }
-cout<<"line 74"<<endl;
     SF_INFO trackInfo;
     trackInfo.samplerate = 44100; //something not right with this part of the code
     trackInfo.channels = 1;
@@ -90,8 +83,6 @@ cout<<"line 74"<<endl;
     sf_count_t numFrames = loopAudioToWrite.size();
     cout<<numFrames<<endl;
     sf_writef_float(file, ptr_loopAudioToWrite,numFrames);
-cout<<"line 90"<<endl;
     sf_close(file);
-    cout<<"line 92"<<endl;
     return true;
 }

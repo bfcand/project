@@ -9,12 +9,14 @@
 using namespace std;
 
 Library::Library(){
-loops = new Loop*[10]{nullptr};
+loops = new Loop*[10]{ nullptr };
 };
 
 Library::~Library(){
     for (int i = 0; i < 10; i++){
+        if(loops[i]!= nullptr){
         delete loops[i];
+        }
     }
 };
 Loop* Library::selectLoop(string name) {
@@ -58,6 +60,17 @@ bool Library::deleteLoop(string name) {
     }
     return false;
 }
+
+int Library::getNumLoops(){
+    int numLoops = 0;
+    for (int i = 0; i < 10; i++){
+        if(loops[i]!=nullptr){
+            numLoops++;
+        }
+    }
+    return numLoops;
+}
+
 void Library::getLoopNames() {
     cout<<"Loops:"<<endl;
     for (int i = 0; i < 10; i++){

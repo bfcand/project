@@ -14,6 +14,7 @@ class Library {
     Loop* selectLoop(std::string name);
     bool addLoop(Loop* loop);
     bool deleteLoop(std::string name);
+    int getNumLoops();
     void getLoopNames();
 };
 

@@ -73,14 +73,13 @@ Pa_OpenDefaultStream(
 
 Pa_StartStream(stream);
 
-//stopping the loop
+
 string stopInput;
-string clearBuffer;
-cin>>clearBuffer;
-while (trackData.play){
+while (audioData->play){
 cin>>stopInput;
 if(stopInput=="p"){
-  trackData.play = false;
+  cin.ignore(numeric_limits<streamsize>::max(), '\n');
+  audioData->play = false;
 }
 }
 
